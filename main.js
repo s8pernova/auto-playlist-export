@@ -2,6 +2,7 @@
 
 const MAX_RESULTS = 25; // Read the latest X videos from the playlist
 const CHANNEL_ID = "UCl92ObB0zFur9AcB5jeMUVA"; // @FCPSeduFCPS
+const PLAYLIST_ID = "PLSz76NCRDYQF3hPS2qS2SGEcoO4__Yd7Z";  // School Board Meetings
 const FIRST_DATA_ROW = 2; // Header is row 1
 const COLS = [
 	"Video ID",
@@ -13,7 +14,6 @@ const COLS = [
 ];
 
 function dumpPlaylistToSheet() {
-	const playlistId = "PLSz76NCRDYQF3hPS2qS2SGEcoO4__Yd7Z";
 	const sheet = SpreadsheetApp.getActiveSheet();
 
 	setupHeaders_(sheet);
@@ -29,7 +29,7 @@ function dumpPlaylistToSheet() {
 
 	do {
 		const pl = YouTube.PlaylistItems.list("snippet,contentDetails", {
-			playlistId,
+			playlistId: PLAYLIST_ID,
 			maxResults: MAX_RESULTS,
 			pageToken,
 		});
