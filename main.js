@@ -1,8 +1,8 @@
 /* Fill the active sheet with videos + live vs VOD views. */
 
-const MAX_RESULTS = 25;
+const MAX_RESULTS = 25; // Read the latest X videos from the playlist
 const CHANNEL_ID = "UCl92ObB0zFur9AcB5jeMUVA"; // @FCPSeduFCPS
-const FIRST_DATA_ROW = 2;
+const FIRST_DATA_ROW = 2; // Header is row 1
 
 function dumpPlaylistToSheet() {
 	const playlistId = "PLSz76NCRDYQF3hPS2qS2SGEcoO4__Yd7Z";
