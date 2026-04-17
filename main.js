@@ -25,6 +25,7 @@ function dumpPlaylistToSheet() {
 
 	let pageToken = null;
 	let rowsToWrite = [];
+	let views;
 
 	do {
 		const pl = YouTube.PlaylistItems.list("snippet,contentDetails", {
@@ -88,6 +89,8 @@ function dumpPlaylistToSheet() {
 			]);
 
 			existingIds.add(id);
+
+			Logger.log("Added video ID " + id);
 		}
 
 		pageToken = pl.nextPageToken;
