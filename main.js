@@ -103,7 +103,7 @@ function dumpPlaylistToSheet() {
 			.getRange(2, 1, rowsToWrite.length, rowsToWrite[0].length)
 			.setValues(rowsToWrite);
 
-		const totalViewFormula = rowsToWrite.map((_, index) => {
+		const totalViewFormulas = rowsToWrite.map((_, index) => {
 			const rowNumber = index + 2;
 			return [`=SUM(D${rowNumber}:F${rowNumber})`]; // Col D through F
 		});
