@@ -1,6 +1,6 @@
 /* Fill the active sheet with videos + live vs VOD views. */
 
-const MAX_RESULTS = 50;
+const MAX_RESULTS = 25;
 const CHANNEL_ID = "UCl92ObB0zFur9AcB5jeMUVA";
 
 function dumpPlaylistToSheet() {
@@ -56,6 +56,16 @@ function dumpPlaylistToSheet() {
 			const meta = metaById[id];
 			if (!meta) return; // skipped (private, etc.)
 
+			// Skip if video id is already in sheet
+			if (
+				sheet
+					.getRange(row, 1)
+					.createTextFinder(id)
+					.matchEntireCell(true)
+					.findNext()
+			)
+				return;
+
 			// Build Analytics query dates
 			const startDate = Utilities.formatDate(
 				meta.publishedAt,
@@ -100,15 +110,17 @@ function dumpPlaylistToSheet() {
 				);
 
 			// Columns B-C: title, date, Ch 99 (blank), live, VOD
-			sheet.getRange(row, 2, 1, 5).setValues([
-				[
-					meta.title,
-					meta.publishedAt || "",
-					"", // Ch 99 views
-					liveViews,
-					vodViews,
-				],
-			]);
+			sheet
+				.getRange(row, 2, 1, 5)
+				.setValues([
+					[
+						meta.title,
+						meta.publishedAt || "",
+						0,
+						liveViews,
+						vodViews,
+					],
+				]);
 
 			row++;
 		});
