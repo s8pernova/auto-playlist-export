@@ -75,15 +75,16 @@ function dumpPlaylistToSheet() {
 				"yyyy-MM-dd",
 			);
 
-			const views = getLiveAndVodViews_(id, startDate, today);
+			// Can only run successfully through the owner of the brand account
+			// const views = getLiveAndVodViews_(id, startDate, today);
 
 			rowsToWrite.push([
 				`=HYPERLINK("https://www.youtube.com/watch?v=${id}","${id}")`,
 				meta.title,
 				meta.publishedAt,
-				0,
-				views.liveViews,
-				views.vodViews,
+				0, // Can't get CH99 views; default to 0
+				views.liveViews || 0,
+				views.vodViews || 0,
 			]);
 
 			existingIds.add(id);
