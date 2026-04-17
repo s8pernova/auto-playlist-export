@@ -1,15 +1,22 @@
 /* Fill the active sheet with videos + live vs VOD views. */
 
 const MAX_RESULTS = 25;
-const CHANNEL_ID = "UCl92ObB0zFur9AcB5jeMUVA";
+const CHANNEL_ID = "UCl92ObB0zFur9AcB5jeMUVA"; // @FCPSeduFCPS
+const FIRST_DATA_ROW = 2;
 
 function dumpPlaylistToSheet() {
-	const playlistId = "PLSz76NCRDYQF3hPS2qS2SGEcoO4__Yd7Z"; // school board playlist
+	const playlistId = "PLSz76NCRDYQF3hPS2qS2SGEcoO4__Yd7Z";
 	const sheet = SpreadsheetApp.getActiveSheet();
 
-	let pageToken = null;
+	setupHeaders_(sheet);
+
 	const tz = Session.getScriptTimeZone();
 	const today = Utilities.formatDate(new Date(), tz, "yyyy-MM-dd");
+
+	const existingIds = getExistingVideoIds_(sheet);
+
+	let pageToken = null;
+	let rowsToWrite = [];
 
 	do {
 		const pl = YouTube.PlaylistItems.list("snippet,contentDetails", {
@@ -23,116 +30,153 @@ function dumpPlaylistToSheet() {
 
 		const ids = items
 			.map((it) => it.contentDetails?.videoId)
-			.filter(Boolean);
+			.filter(Boolean)
+			.filter((id) => !existingIds.has(id));
+
 		if (!ids.length) {
 			pageToken = pl.nextPageToken;
 			continue;
 		}
 
-		// Get video metadata (title, publish date, privacy)
 		const vResp = YouTube.Videos.list("snippet,status", {
 			id: ids.join(","),
 		});
 
 		const metaById = {};
+
 		(vResp.items || []).forEach((v) => {
-			// skip private / unlisted
-			if (v.status && v.status.privacyStatus !== "public") return;
+			if (v.status?.privacyStatus !== "public") return;
 
 			const iso = v.snippet?.publishedAt || "";
-			const dateObj = iso ? new Date(iso) : null;
+			const publishedAt = iso ? new Date(iso) : null;
+			if (!publishedAt) return;
 
 			metaById[v.id] = {
 				title: v.snippet?.title || "",
-				publishedAt: dateObj,
+				publishedAt,
 			};
 		});
 
-		const startRow = sheet.getLastRow() + 1;
-		let row = startRow;
-
-		// For each video on this page, pull analytics (live vs on-demand)
-		ids.forEach((id) => {
+		for (const id of ids) {
 			const meta = metaById[id];
-			if (!meta) return; // skipped (private, etc.)
+			if (!meta) continue;
 
-			// Skip if video id is already in sheet
-			if (
-				sheet
-					.getRange(row, 1)
-					.createTextFinder(id)
-					.matchEntireCell(true)
-					.findNext()
-			)
-				return;
-
-			// Build Analytics query dates
 			const startDate = Utilities.formatDate(
 				meta.publishedAt,
 				tz,
 				"yyyy-MM-dd",
 			);
 
-			let liveViews = 0;
-			let vodViews = 0;
+			const views = getLiveAndVodViews_(id, startDate, today);
 
-			try {
-				// One Analytics call per video: split views by liveOrOnDemand
-				const report = YouTubeAnalytics.Reports.query({
-					ids: "channel==" + CHANNEL_ID,
-					startDate: startDate,
-					endDate: today,
-					metrics: "views",
-					dimensions: "liveOrOnDemand",
-					filters: "video==" + id,
-				});
+			rowsToWrite.push([
+				`=HYPERLINK("https://www.youtube.com/watch?v=${id}","${id}")`,
+				meta.title,
+				meta.publishedAt,
+				0,
+				views.liveViews,
+				views.vodViews,
+			]);
 
-				if (report && report.rows) {
-					report.rows.forEach((r) => {
-						const type = r[0]; // 'LIVE' or 'ON_DEMAND'
-						const views = Number(r[1]) || 0;
-						if (type === "LIVE") {
-							liveViews = views;
-						} else if (type === "ON_DEMAND") {
-							vodViews = views;
-						}
-					});
-				}
-			} catch (e) {
-				Logger.log("Analytics failed for video " + id + ": " + e);
-			}
-
-			// Column A: clickable ID
-			sheet
-				.getRange(row, 1)
-				.setFormula(
-					`=HYPERLINK("https://www.youtube.com/watch?v=${id}","${id}")`,
-				);
-
-			// Columns B-C: title, date, Ch 99 (blank), live, VOD
-			sheet
-				.getRange(row, 2, 1, 5)
-				.setValues([
-					[
-						meta.title,
-						meta.publishedAt || "",
-						0,
-						liveViews,
-						vodViews,
-					],
-				]);
-
-			row++;
-		});
+			existingIds.add(id);
+		}
 
 		pageToken = pl.nextPageToken;
 	} while (pageToken);
 
-	// Format date column C as M/d/yyyy
-	const lastRow = sheet.getLastRow();
-	if (lastRow >= 2) {
-		sheet.getRange(2, 3, lastRow - 1, 1).setNumberFormat("M/d/yyyy");
+	// Append right after the headers
+	if (rowsToWrite.length > 0) {
+		sheet.insertRowsAfter(1, rowsToWrite.length);
+
+		sheet
+			.getRange(2, 1, rowsToWrite.length, rowsToWrite[0].length)
+			.setValues(rowsToWrite);
 	}
+
+	const lastRow = sheet.getLastRow();
+	if (lastRow >= FIRST_DATA_ROW) {
+		sheet
+			.getRange(FIRST_DATA_ROW, 3, lastRow - FIRST_DATA_ROW + 1, 1)
+			.setNumberFormat("M/d/yyyy");
+	}
+}
+
+function setupHeaders_(sheet) {
+	if (sheet.getLastRow() === 0) {
+		sheet.appendRow([
+			"Video ID",
+			"Title",
+			"Published Date",
+			"Channel 99 Views",
+			"Live Views",
+			"VOD Views",
+		]);
+		return;
+	}
+
+	const firstCell = sheet.getRange(1, 1).getDisplayValue();
+	if (!firstCell) {
+		sheet
+			.getRange(1, 1, 1, 6)
+			.setValues([
+				[
+					"Video ID",
+					"Title",
+					"Published Date",
+					"Channel 99 Views",
+					"Live Views",
+					"VOD Views",
+				],
+			]);
+	}
+}
+
+function getExistingVideoIds_(sheet) {
+	const lastRow = sheet.getLastRow();
+
+	if (lastRow < FIRST_DATA_ROW) {
+		return new Set();
+	}
+
+	const values = sheet
+		.getRange(FIRST_DATA_ROW, 1, lastRow - FIRST_DATA_ROW + 1, 1)
+		.getDisplayValues()
+		.flat()
+		.map((value) => value.trim())
+		.filter(Boolean);
+
+	return new Set(values);
+}
+
+function getLiveAndVodViews_(videoId, startDate, endDate) {
+	let liveViews = 0;
+	let vodViews = 0;
+
+	try {
+		const report = YouTubeAnalytics.Reports.query({
+			ids: "channel==" + CHANNEL_ID,
+			startDate,
+			endDate,
+			metrics: "views",
+			dimensions: "liveOrOnDemand",
+			filters: "video==" + videoId,
+		});
+
+		(report.rows || []).forEach((row) => {
+			const type = row[0];
+			const views = Number(row[1]) || 0;
+
+			if (type === "LIVE") {
+				liveViews = views;
+			} else if (type === "ON_DEMAND") {
+				vodViews = views;
+			}
+		});
+	} catch (e) {
+		Logger.log("Analytics failed for video " + videoId + ": " + e);
+	}
+
+	return { liveViews, vodViews };
 }
 
 function debugOneVideo() {
@@ -140,11 +184,11 @@ function debugOneVideo() {
 	const today = Utilities.formatDate(new Date(), tz, "yyyy-MM-dd");
 
 	const videoId = "RnuZOgyrOmk";
-	const startDate = "2006-01-01"; // wide range for testing
+	const startDate = "2006-01-01";
 
 	const report = YouTubeAnalytics.Reports.query({
 		ids: "channel==" + CHANNEL_ID,
-		startDate: startDate,
+		startDate,
 		endDate: today,
 		metrics: "views",
 		dimensions: "liveOrOnDemand",
