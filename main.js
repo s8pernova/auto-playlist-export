@@ -83,8 +83,8 @@ function dumpPlaylistToSheet() {
 				meta.title,
 				meta.publishedAt,
 				0, // Can't get CH99 views; default to 0
-				views.liveViews || 0,
-				views.vodViews || 0,
+				views?.liveViews ?? 0,
+				views?.vodViews ?? 0,
 			]);
 
 			existingIds.add(id);
