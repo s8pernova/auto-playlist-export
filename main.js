@@ -3,6 +3,14 @@
 const MAX_RESULTS = 25; // Read the latest X videos from the playlist
 const CHANNEL_ID = "UCl92ObB0zFur9AcB5jeMUVA"; // @FCPSeduFCPS
 const FIRST_DATA_ROW = 2; // Header is row 1
+const COLS = [
+	"Video ID",
+	"Title",
+	"Published Date",
+	"Channel 99 Views",
+	"Live Views",
+	"VOD Views",
+];
 
 function dumpPlaylistToSheet() {
 	const playlistId = "PLSz76NCRDYQF3hPS2qS2SGEcoO4__Yd7Z";
@@ -103,31 +111,13 @@ function dumpPlaylistToSheet() {
 
 function setupHeaders_(sheet) {
 	if (sheet.getLastRow() === 0) {
-		sheet.appendRow([
-			"Video ID",
-			"Title",
-			"Published Date",
-			"Channel 99 Views",
-			"Live Views",
-			"VOD Views",
-		]);
+		sheet.appendRow(COLS);
 		return;
 	}
 
 	const firstCell = sheet.getRange(1, 1).getDisplayValue();
 	if (!firstCell) {
-		sheet
-			.getRange(1, 1, 1, 6)
-			.setValues([
-				[
-					"Video ID",
-					"Title",
-					"Published Date",
-					"Channel 99 Views",
-					"Live Views",
-					"VOD Views",
-				],
-			]);
+		sheet.getRange(1, 1, 1, 6).setValues([COLS]);
 	}
 }
 
