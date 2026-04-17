@@ -96,13 +96,21 @@ function dumpPlaylistToSheet() {
 		pageToken = pl.nextPageToken;
 	} while (pageToken);
 
-	// Append right after the headers
 	if (rowsToWrite.length > 0) {
-		sheet.insertRowsAfter(1, rowsToWrite.length);
+		sheet.insertRowsAfter(1, rowsToWrite.length); // Append right after the headers
 
 		sheet
 			.getRange(2, 1, rowsToWrite.length, rowsToWrite[0].length)
 			.setValues(rowsToWrite);
+
+		const totalViewFormula = rowsToWrite.map((_, index) => {
+			const rowNumber = index + 2;
+			return [`=SUM(D${rowNumber}:F${rowNumber})`]; // Col D through F
+		});
+
+		sheet
+			.getRange(2, 7, totalViewFormulas.length, 1)
+			.setFormulas(totalViewFormulas);
 	}
 
 	const lastRow = sheet.getLastRow();
