@@ -31,8 +31,7 @@ function dumpPlaylistToSheet() {
 
 	do {
 		const pl = YouTube.PlaylistItems.list("snippet,contentDetails", {
-			PLAYLIST_ID
-    ,
+			playlistId: PLAYLIST_ID,
 			maxResults: MAX_RESULTS,
 			pageToken,
 		});
@@ -80,7 +79,7 @@ function dumpPlaylistToSheet() {
 			);
 
 			// Can only run successfully through the owner of the brand account
-			// const views = getLiveAndVodViews_(id, startDate, today);
+			const views = getLiveAndVodViews_(id, startDate, today);
 
 			rowsToWrite.push([
 				`=HYPERLINK("https://www.youtube.com/watch?v=${id}","${id}")`,
