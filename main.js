@@ -17,6 +17,8 @@ const COLS = [
   "Total Views",
 ];
 
+let views;
+
 function dumpPlaylistToSheet() {
   const lock = LockService.getScriptLock();
   lock.waitLock(30000);
@@ -75,15 +77,14 @@ function dumpPlaylistToSheet() {
 
       // This requires the account running the script to have YouTube Analytics access.
       // const views = getLiveAndVodViews_(id, startDate, today);
-      const views = { liveViews: 0, vodViews: 0 };
 
       rowsToWrite.push([
         `=HYPERLINK("https://www.youtube.com/watch?v=${id}","${id}")`,
         meta.title,
         meta.publishedAt,
         0,
-        views.liveViews,
-        views.vodViews,
+        views?.liveViews ?? 0,
+        views?.vodViews ?? 0,
         "",
       ]);
 
