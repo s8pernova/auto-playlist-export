@@ -4,6 +4,8 @@ const MAX_RESULTS = 50; // Read the latest X videos from the playlist
 const CHANNEL_ID = "UCl92ObB0zFur9AcB5jeMUVA"; // @FCPSeduFCPS
 const FIRST_DATA_ROW = 2; // Header is row 1
 const PLAYLIST_ID = "PLSz76NCRDYQF3hPS2qS2SGEcoO4__Yd7Z"; // School board meeting playlist
+const DEBUG_VIDEO_ID = "RnuZOgyrOmk";
+const DEBUG_START_DATE = "2006-01-01";
 const COLS = [
 	"Video ID",
 	"Title",
@@ -186,16 +188,13 @@ function debugOneVideo() {
 	const tz = Session.getScriptTimeZone();
 	const today = Utilities.formatDate(new Date(), tz, "yyyy-MM-dd");
 
-	const videoId = "RnuZOgyrOmk";
-	const startDate = "2006-01-01";
-
 	const report = YouTubeAnalytics.Reports.query({
 		ids: "channel==" + CHANNEL_ID,
-		startDate,
+		DEBUG_START_DATE,
 		endDate: today,
 		metrics: "views",
 		dimensions: "liveOrOnDemand",
-		filters: "video==" + videoId,
+		filters: "video==" + DEBUG_VIDEO,
 	});
 
 	Logger.log(JSON.stringify(report, null, 2));
