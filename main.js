@@ -1,9 +1,9 @@
 /* Fill the active sheet with videos + live vs VOD views. */
 
-const MAX_RESULTS = 25; // Read the latest X videos from the playlist
+const MAX_RESULTS = 50; // Read the latest X videos from the playlist
 const CHANNEL_ID = "UCl92ObB0zFur9AcB5jeMUVA"; // @FCPSeduFCPS
-const PLAYLIST_ID = "PLSz76NCRDYQF3hPS2qS2SGEcoO4__Yd7Z";  // School Board Meetings
 const FIRST_DATA_ROW = 2; // Header is row 1
+const PLAYLIST_ID = "PLSz76NCRDYQF3hPS2qS2SGEcoO4__Yd7Z"; // School board meeting playlist
 const COLS = [
 	"Video ID",
 	"Title",
@@ -29,7 +29,8 @@ function dumpPlaylistToSheet() {
 
 	do {
 		const pl = YouTube.PlaylistItems.list("snippet,contentDetails", {
-			playlistId: PLAYLIST_ID,
+			PLAYLIST_ID
+    ,
 			maxResults: MAX_RESULTS,
 			pageToken,
 		});
